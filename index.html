@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Vigilo Kalender</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f2f2f7; min-height: 100vh; padding: 1rem 1rem 3rem; }
+.card { background: #fff; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+.subtitle { font-size: 13px; color: #888; }
+.upload-area { border: 2px dashed #ccc; border-radius: 12px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+.upload-area:active { background: #f0f0f0; }
+.upload-icon { font-size: 36px; margin-bottom: 8px; }
+.upload-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.upload-sub { font-size: 13px; color: #888; }
+.status-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f5f5f5; border-radius: 10px; font-size: 14px; color: #555; }
+.spinner { width: 18px; height: 18px; border: 2px solid #ddd; border-top-color: #555; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box { padding: 12px 16px; background: #fff0f0; border: 1px solid #fcc; border-radius: 10px; font-size: 14px; color: #c00; }
+.info-box { padding: 12px 16px; background: #f0f7ff; border-radius: 10px; font-size: 13px; color: #336; line-height: 1.5; }
+.event-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; transition: opacity 0.2s; }
+.event-item.unchecked { opacity: 0.4; }
+.event-item input[type=checkbox] { margin-top: 2px; width: 20px; height: 20px; flex-shrink: 0; accent-color: #007aff; }
+.event-title { font-size: 14px; font-weight: 500; }
+.event-meta { font-size: 12px; color: #888; margin-top: 2px; }
+.hw-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
+.hw-item input[type=checkbox] { margin-top: 2px; width: 20px; height: 20px; flex-shrink: 0; accent-color: #34c759; }
+.hw-item.done .hw-text { text-decoration: line-through; color: #aaa; }
+.hw-text { font-size: 14px; line-height: 1.4; }
+.hw-meta { font-size: 12px; color: #888; margin-top: 2px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 10px; border: 1px solid #ddd; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; color: #333; -webkit-tap-highlight-color: transparent; }
+.btn:active { background: #f0f0f0; }
+.btn-primary { background: #007aff; color: #fff; border-color: #007aff; }
+.btn-primary:active { background: #0062cc; }
+.row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.hint { font-size: 12px; color: #999; margin-top: 8px; line-height: 1.5; }
+label { font-size: 13px; font-weight: 500; color: #555; display: block; margin-bottom: 6px; }
+input[type=password], input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; -webkit-appearance: none; }
+input[type=password]:focus, input[type=text]:focus { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+.key-row { display: flex; gap: 8px; align-items: flex-end; }
+.key-row input { flex: 1; }
+.tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; margin-left: 6px; }
+.tag-closed { background: #ffe0e0; color: #c00; }
+.tag-trip { background: #e0f0ff; color: #036; }
+.tag-meeting { background: #f0e8ff; color: #505; }
+.tag-special { background: #fff8e0; color: #760; }
+</style>
+</head>
+<body>
+<div style="max-width: 500px; margin: 0 auto;">
+
+  <div class="card">
+    <h1>📅 Vigilo Kalender</h1>
+    <p class="subtitle">Finn spesielle dager og lekser fra barnehage og skole</p>
+  </div>
+
+  <div class="card" id="apikey-card">
+    <label>🔑 Anthropic API-nøkkel</label>
+    <div class="key-row">
+      <input type="password" id="apikey-input" placeholder="sk-ant-..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="btn btn-primary" onclick="saveKey()">Lagre</button>
+    </div>
+    <p class="hint">Lagres kun på denne enheten. Få nøkkel på <a href="https://console.anthropic.com" style="color:#007aff;">console.anthropic.com</a> — du får $5 gratis kreditt å starte med.</p>
+    <div id="key-status" style="margin-top:10px;display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="upload-area" id="drop-area" onclick="document.getElementById('pdf-input').click()">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Trykk for å velge PDF</div>
+      <div class="upload-sub">Ukeplan, aktivitetsplan eller lekseplan</div>
+    </div>
+    <input type="file" id="pdf-input" accept="application/pdf" style="display:none">
+  </div>
+
+  <div id="status-card" style="display:none" class="card">
+    <div class="status-box">
+      <div class="spinner"></div>
+      <span id="status-text">Leser PDF...</span>
+    </div>
+  </div>
+
+  <div id="error-card" style="display:none" class="card">
+    <div class="error-box" id="error-text"></div>
+  </div>
+
+  <div id="summary-card" style="display:none" class="card">
+    <div class="info-box" id="summary-text"></div>
+  </div>
+
+  <div id="events-card" style="display:none" class="card">
+    <div class="row">
+      <h2 style="margin:0">Spesielle dager</h2>
+      <button class="btn" onclick="exportICS()">📥 Eksporter .ics</button>
+    </div>
+    <div id="events-list"></div>
+    <p class="hint">Huk av dagene du vil ha med, trykk «Eksporter .ics» og åpne filen — Safari spør om du vil legge den til i Kalender-appen.</p>
+  </div>
+
+  <div id="hw-card" style="display:none" class="card">
+    <h2>📚 Lekser</h2>
+    <div id="hw-list"></div>
+  </div>
+
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+const MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
+const DAYS = ["søn","man","tir","ons","tor","fre","lør"];
+const TYPE_ICON = { closed:"🔒", trip:"🚌", meeting:"👥", special:"⭐" };
+const TYPE_LABEL = { closed:"Stengt", trip:"Utflukt", meeting:"Møte", special:"Spesiell" };
+const TYPE_TAG = { closed:"tag-closed", trip:"tag-trip", meeting:"tag-meeting", special:"tag-special" };
+let parsedEvents = [], eventChecked = [], hwDone = [], allHomework = [];
+
+function getKey() { try { return localStorage.getItem('anthropic_api_key') || ''; } catch { return ''; } }
+function saveKey() {
+  const val = document.getElementById('apikey-input').value.trim();
+  if (!val.startsWith('sk-ant-')) { showKeyStatus('Nøkkelen skal starte med sk-ant-', false); return; }
+  try { localStorage.setItem('anthropic_api_key', val); } catch(e) { showKeyStatus('Kunne ikke lagre: ' + e.message, false); return; }
+  showKeyStatus('✅ Nøkkel lagret!', true);
+  document.getElementById('apikey-input').value = '••••••••••••••••';
+}
+function showKeyStatus(msg, ok) {
+  const el = document.getElementById('key-status');
+  el.style.display = 'block';
+  el.innerHTML = '<p style="font-size:13px;color:' + (ok?'#2a2':'#c00') + '">' + msg + '</p>';
+}
+window.addEventListener('load', () => {
+  const k = getKey();
+  if (k) { document.getElementById('apikey-input').value = '••••••••••••••••'; showKeyStatus('✅ API-nøkkel er lagret på denne enheten', true); }
+});
+
+document.getElementById('pdf-input').addEventListener('change', e => handleFile(e.target.files[0]));
+
+function formatDate(d) {
+  if (!d) return 'Ukjent dato';
+  try { const dt = new Date(d + 'T12:00:00'); return DAYS[dt.getDay()] + ' ' + dt.getDate() + '. ' + MONTHS[dt.getMonth()] + ' ' + dt.getFullYear(); }
+  catch { return d; }
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  const key = getKey();
+  if (!key) { showError('Du må legge inn en API-nøkkel først (se feltet øverst).'); return; }
+  hide('events-card'); hide('hw-card'); hide('summary-card'); hide('error-card');
+  show('status-card'); setStatus('Leser PDF...');
+  try {
+    const text = await extractText(file);
+    if (!text || text.trim().length < 20) { showError('Kunne ikke lese tekst fra PDF-en. Den kan være skannet som bilde.'); return; }
+    setStatus('Analyserer med AI... ✨');
+    await analyze(text, key);
+  } catch(err) { showError('Feil: ' + err.message); }
+  hide('status-card');
+}
+
+async function extractText(file) {
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: ab, disableWorker: true }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+async function analyze(text, key) {
+  const today = new Date().toISOString().slice(0,10);
+  const prompt = 'Du er en assistent som hjelper norske foreldre med å finne viktige dager fra barnehage- og skoleplanleggingsdokumenter.\n\nAnalyser teksten og finn:\n1. Spesielle dager som krever handling: utflukter, turer, temaer, «husk å ta med», stengt, planleggingsdager, foreldremøter, arrangement osv. IKKE ta med vanlige hverdager.\n2. Lekser eller oppgaver barn skal gjøre hjemme.\n\nSvar KUN med gyldig JSON uten forklaring eller backticks:\n{"events":[{"date":"YYYY-MM-DD","title":"Kort tittel","note":"Hva som må huskes","type":"special|closed|trip|meeting"}],"homework":[{"subject":"Fag","task":"Hva skal gjøres","due":"YYYY-MM-DD eller null"}],"summary":"En setning om dokumentet"}\n\nDagens dato: ' + today + '\n\nPDF-tekst:\n' + text.slice(0, 7000);
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] })
+  });
+
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    if (resp.status === 401) throw new Error('Ugyldig API-nøkkel. Sjekk nøkkelen og prøv igjen.');
+    throw new Error(e.error?.message || 'API-feil ' + resp.status);
+  }
+
+  const data = await resp.json();
+  const raw = data.content.map(b => b.text || '').join('');
+  const clean = raw.replace(/```json|```/g, '').trim();
+  let parsed;
+  try { parsed = JSON.parse(clean); } catch { throw new Error('Fikk uventet svar fra AI. Prøv igjen.'); }
+
+  parsedEvents = (parsed.events || []).filter(e => e.date && e.title);
+  eventChecked = parsedEvents.map(() => true);
+  allHomework = parsed.homework || [];
+  hwDone = allHomework.map(() => false);
+
+  if (parsed.summary) { document.getElementById('summary-text').textContent = '📋 ' + parsed.summary; show('summary-card'); }
+  if (parsedEvents.length > 0) { renderEvents(); show('events-card'); }
+  if (allHomework.length > 0) { renderHW(); show('hw-card'); }
+  if (!parsedEvents.length && !allHomework.length) showError('Ingen spesielle dager eller lekser funnet.');
+}
+
+function renderEvents() {
+  const list = document.getElementById('events-list');
+  list.innerHTML = '';
+  parsedEvents.forEach((ev, i) => {
+    const div = document.createElement('div');
+    div.className = 'event-item' + (eventChecked[i] ? '' : ' unchecked');
+    div.id = 'ev-' + i;
+    const tagClass = TYPE_TAG[ev.type] || 'tag-special';
+    const tagLabel = TYPE_LABEL[ev.type] || 'Spesiell';
+    div.innerHTML = '<input type="checkbox" ' + (eventChecked[i]?'checked':'') + ' onchange="toggleEv(' + i + ')">' +
+      '<div style="flex:1"><div class="event-title">' + (TYPE_ICON[ev.type]||'⭐') + ' ' + ev.title +
+      '<span class="tag ' + tagClass + '">' + tagLabel + '</span></div>' +
+      '<div class="event-meta">' + formatDate(ev.date) + (ev.note?' · '+ev.note:'') + '</div></div>';
+    list.appendChild(div);
+  });
+}
+
+function renderHW() {
+  const list = document.getElementById('hw-list');
+  list.innerHTML = '';
+  allHomework.forEach((h, i) => {
+    const div = document.createElement('div');
+    div.className = 'hw-item' + (hwDone[i]?' done':'');
+    div.id = 'hw-' + i;
+    div.innerHTML = '<input type="checkbox" ' + (hwDone[i]?'checked':'') + ' onchange="toggleHW(' + i + ')">' +
+      '<div class="hw-text"><div>' + h.task + '</div>' +
+      '<div class="hw-meta">' + h.subject + (h.due?' · Frist: '+formatDate(h.due):'') + '</div></div>';
+    list.appendChild(div);
+  });
+}
+
+function toggleEv(i) {
+  eventChecked[i] = !eventChecked[i];
+  const el = document.getElementById('ev-' + i);
+  if (eventChecked[i]) el.classList.remove('unchecked'); else el.classList.add('unchecked');
+}
+function toggleHW(i) {
+  hwDone[i] = !hwDone[i];
+  const el = document.getElementById('hw-' + i);
+  if (hwDone[i]) el.classList.add('done'); else el.classList.remove('done');
+  el.querySelector('input').checked = hwDone[i];
+}
+
+function exportICS() {
+  const selected = parsedEvents.filter((_, i) => eventChecked[i]);
+  if (!selected.length) { showError('Ingen dager er valgt.'); return; }
+  hide('error-card');
+  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nCALSCALE:GREGORIAN\r\nPRODID:-//VigiloPDF//NO\r\n';
+  selected.forEach(ev => {
+    const d = ev.date.replace(/-/g,'');
+    const uid = d + '-' + Math.random().toString(36).slice(2) + '@vigilo';
+    ics += 'BEGIN:VEVENT\r\nUID:' + uid + '\r\nDTSTART;VALUE=DATE:' + d + '\r\nDTEND;VALUE=DATE:' + d + '\r\nSUMMARY:' + ev.title + '\r\nDESCRIPTION:' + (ev.note||'') + '\r\nEND:VEVENT\r\n';
+  });
+  ics += 'END:VCALENDAR';
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vigilo-kalender.ics'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function show(id) { document.getElementById(id).style.display = ''; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function setStatus(msg) { document.getElementById('status-text').textContent = msg; }
+function showError(msg) { document.getElementById('error-text').textContent = msg; show('error-card'); hide('status-card'); }
+</script>
+</body>
+</html>
