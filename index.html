@@ -4,6 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SKJERA</title>
+
+<style id="dark-mode-style">
+body.dark {
+  --bg: #0f1117;
+  --bg2: #1a1d27;
+  --bg3: #22263a;
+  --text: #e8eaf6;
+  --text2: #9aa0c0;
+  --border: #2e3250;
+  --card: #1a1d27;
+  --input-bg: #22263a;
+  --btn-bg: #22263a;
+  --btn-border: #3a3f60;
+  background: #0f1117 !important;
+}
+body.dark .card { background: var(--card) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important; }
+body.dark h1, body.dark h2, body.dark .onboard-title, body.dark .hw-section-title { color: var(--text) !important; }
+body.dark .subtitle, body.dark .upload-sub, body.dark .event-meta, body.dark .hw-meta, body.dark .hint, body.dark .settings-label { color: var(--text2) !important; }
+body.dark .upload-area { border-color: #3a3f60 !important; }
+body.dark .upload-title, body.dark .hw-text { color: var(--text) !important; }
+body.dark .event-item, body.dark .hw-item { background: var(--bg3) !important; border: 1px solid var(--border) !important; }
+body.dark .event-title { color: var(--text) !important; }
+body.dark .status-box { background: var(--bg3) !important; color: var(--text2) !important; }
+body.dark .btn { background: var(--btn-bg) !important; border-color: var(--btn-border) !important; color: var(--text) !important; }
+body.dark .btn-primary { background: #5a4fc0 !important; border-color: #5a4fc0 !important; color: #fff !important; }
+body.dark .settings-input, body.dark input[type=password], body.dark input[type=text] { background: var(--input-bg) !important; border-color: var(--border) !important; color: var(--text) !important; }
+body.dark .tab-bar { background: var(--card) !important; border-color: var(--border) !important; }
+body.dark .tab { color: var(--text2) !important; }
+body.dark .tab.active { color: #9A8BFF !important; border-color: #9A8BFF !important; }
+body.dark .info-box { background: #1a2040 !important; color: #9ab0e0 !important; }
+body.dark .error-box { background: #2a1010 !important; border-color: #6a2020 !important; color: #f08080 !important; }
+body.dark .onboard-card { background: var(--card) !important; }
+body.dark .child-tag { background: #2a2560; color: #b0a0f8; }
+body.dark .tag-closed { background: #3a1020; color: #f08080; }
+body.dark .tag-trip { background: #102030; color: #80c0f0; }
+body.dark .tag-meeting { background: #201030; color: #c090f0; }
+body.dark .tag-special { background: #302010; color: #f0c060; }
+body.dark .logo-word { fill: #c8d8f8 !important; }
+body.dark .cal-body { fill: #1e2a4a !important; stroke: #c8d8f8 !important; }
+body.dark .cal-ring { fill: #c8d8f8 !important; }
+body.dark .cal-cells rect { fill: #2e3a5a !important; }
+
+body.dark .modal-card { background: #1a1d27 !important; }
+body.dark select { background: #22263a !important; color: #e8eaf6 !important; border-color: #2e3250 !important; }
+</style>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,14 +135,92 @@ h2 { font-size:16px; font-weight:600; margin-bottom:12px; }
 
 /* SETTINGS TAB icon */
 .tab-settings { margin-left:auto; }
+
+  .logo-word { fill: #08275C; }
+  .cal-body { fill: white; stroke: #08275C; }
+  .cal-ring { fill: #08275C; }
+  .cal-cells { fill: #ECEAF4; }
+  @media (prefers-color-scheme: dark) {
+    .logo-word { fill: #c8d8f8; }
+    .cal-body { fill: #1e2a4a; stroke: #c8d8f8; }
+    .cal-ring { fill: #c8d8f8; }
+    .cal-cells { fill: #2e3a5a; }
+  }
 </style>
 </head>
 <body>
 
 <!-- ONBOARDING -->
+<button onclick="toggleDark()" id="dark-btn" style="position:fixed;top:1rem;right:1rem;z-index:100;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;backdrop-filter:blur(4px);" aria-label="Toggle dark mode">🌙</button>
+
+<div id="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#fff;border-radius:20px;padding:1.5rem;width:100%;max-width:400px;" class="modal-card">
+    <input type="hidden" id="modal-child-id">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="margin:0;font-size:17px;">Legg til manuelt</h2>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">×</button>
+    </div>
+    <label class="settings-label">Type</label>
+    <select id="modal-type" onchange="switchModalType()" class="settings-input">
+      <option value="event">📅 Hendelse med dato</option>
+      <option value="note">📝 Notat / lekse</option>
+    </select>
+    <div id="modal-event-fields">
+      <label class="settings-label">Dato</label>
+      <input type="date" id="modal-date" class="settings-input">
+      <label class="settings-label">Tittel</label>
+      <input type="text" id="modal-title" placeholder="F.eks. Skøytedag" class="settings-input" autocorrect="off">
+      <label class="settings-label">Merknad (valgfritt)</label>
+      <input type="text" id="modal-note" placeholder="F.eks. Husk skøyter" class="settings-input" autocorrect="off">
+    </div>
+    <div id="modal-note-fields" style="display:none;">
+      <label class="settings-label">Notat / lekse</label>
+      <input type="text" id="modal-text" placeholder="F.eks. Les side 20-25" class="settings-input" autocorrect="off">
+    </div>
+    <button class="btn btn-primary" onclick="saveManual()" style="width:100%;justify-content:center;margin-top:4px;">Lagre</button>
+  </div>
+</div>
+
 <div id="onboarding">
   <div class="onboard-card">
-    <div class="onboard-title">📅 SKJERA</div>
+    <div style="margin-bottom:8px;"><svg width="100%" viewBox="0 0 520 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Decorative lines -->
+  <path d="M148 52 L162 38" stroke="#5ED3C5" stroke-width="6" stroke-linecap="round"/>
+  <path d="M172 44 L172 28" stroke="#FF6F6F" stroke-width="6" stroke-linecap="round"/>
+  <path d="M194 50 L207 36" stroke="#FFC34D" stroke-width="6" stroke-linecap="round"/>
+  <!-- Text -->
+  <text x="18" y="138" font-family="Poppins, -apple-system, Arial, sans-serif" font-size="90" font-weight="700" fill="#08275C" letter-spacing="-3" class="logo-word">Skjera?</text>
+  <!-- Underline -->
+  <path d="M190 158 C220 148, 268 148, 292 158" stroke="#8D79F7" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- Calendar group scaled to fit -->
+  <g transform="translate(340 20) scale(0.48)">
+    <ellipse cx="160" cy="370" rx="160" ry="18" fill="#D9D9D9" opacity="0.35"/>
+    <rect x="0" y="0" width="320" height="340" rx="40" fill="white" stroke="#08275C" stroke-width="10" class="cal-body"/>
+    <rect x="0" y="0" width="320" height="90" rx="40" fill="#9A8BFF"/>
+    <rect x="0" y="45" width="320" height="45" fill="#9A8BFF"/>
+    <rect x="70" y="-25" width="24" height="70" rx="12" fill="#08275C" class="cal-ring"/>
+    <rect x="220" y="-25" width="24" height="70" rx="12" fill="#08275C" class="cal-ring"/>
+    <g fill="#ECEAF4" class="cal-cells">
+      <rect x="45" y="110" width="50" height="50" rx="10"/>
+      <rect x="115" y="110" width="50" height="50" rx="10"/>
+      <rect x="185" y="110" width="50" height="50" rx="10"/>
+      <rect x="45" y="175" width="50" height="50" rx="10"/>
+      <rect x="115" y="175" width="50" height="50" rx="10"/>
+      <rect x="185" y="175" width="50" height="50" rx="10"/>
+      <rect x="45" y="240" width="50" height="50" rx="10"/>
+      <rect x="115" y="240" width="50" height="50" rx="10"/>
+      <rect x="185" y="240" width="50" height="50" rx="10"/>
+    </g>
+    <path d="M255 135 C255 120,275 115,285 130 C295 115,315 120,315 135 C315 155,285 175,285 175 C285 175,255 155,255 135Z" fill="#FF6F6F"/>
+    <path d="M145 195 L153 215 L175 215 L158 228 L165 248 L145 236 L125 248 L132 228 L115 215 L137 215Z" fill="#FFC34D"/>
+    <circle cx="275" cy="210" r="18" fill="#5ED3C5"/>
+    <path d="M275 228 L275 253" stroke="#5ED3C5" stroke-width="4"/>
+    <path d="M275 253 C270 260,280 265,275 270" stroke="#5ED3C5" stroke-width="4" fill="none"/>
+    <path d="M85 268 V308 C85 321,68 328,58 319 C48 310,55 295,70 295 C75 295,80 297,85 301 V253 L120 243 V283 C120 296,103 303,93 294 C83 285,90 270,105 270 C110 270,115 272,120 276" fill="#8D79F7"/>
+    <path d="M350 20 L375 -5" stroke="#8D79F7" stroke-width="10" stroke-linecap="round"/>
+    <path d="M385 42 L412 15" stroke="#8D79F7" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg></div>
     <div class="onboard-sub">Legg til barna dine for å komme i gang</div>
 
     <label class="settings-label">👶 Legg til barn</label>
@@ -243,13 +367,24 @@ function buildChildContent(child) {
       </div>
       <input type="file" id="pdf-${id}" accept="application/pdf" style="display:none" onchange="handleFile(this.files[0], '${id}')">
     </div>
+    <div class="card" style="display:flex;align-items:center;justify-content:center;">
+      <button class="btn" onclick="showAddModal('${id}')" style="width:100%;justify-content:center;gap:8px;font-size:15px;">
+        <span style="font-size:20px;line-height:1;">＋</span> Legg til manuelt
+      </button>
+    </div>
     <div id="status-${id}" style="display:none" class="card"><div class="status-box"><div class="spinner"></div><span id="status-txt-${id}">Leser PDF...</span></div></div>
     <div id="error-${id}" style="display:none" class="card"><div class="error-box" id="error-txt-${id}"></div></div>
     <div id="summary-${id}" style="display:none" class="card"><div class="info-box" id="summary-txt-${id}"></div></div>
     <div id="events-${id}" style="display:none" class="card">
-      <div class="row"><h2 style="margin:0">Spesielle dager</h2><button class="btn btn-sm" onclick="exportICS('${id}')">📥 Eksporter .ics</button></div>
+      <div class="row">
+        <h2 style="margin:0">Spesielle dager</h2>
+        <div style="display:flex;gap:6px;">
+          <button id="events-toggle-btn-${id}" class="btn btn-sm" onclick="toggleEventsVisibility('${id}')">🙈 Skjul</button>
+          <button class="btn btn-sm" onclick="exportICS('${id}')">📥 Eksporter .ics</button>
+        </div>
+      </div>
       <div id="events-list-${id}"></div>
-      <p class="hint">Huk av dagene du vil ha med og trykk «Eksporter .ics». Åpne filen i Safari for å importere i Kalender-appen.</p>
+      <p class="hint" id="events-hint-${id}">Huk av dagene du vil ha med og trykk «Eksporter .ics». Åpne filen i Safari for å importere i Kalender-appen.</p>
     </div>
     <div id="hw-${id}" style="display:none" class="card">
       <div class="hw-section-title">📚 Lekser</div>
@@ -491,6 +626,78 @@ function showError(childId, msg) {
   show('error-' + childId); hide('status-' + childId);
 }
 
+
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('skjera_dark', isDark ? '1' : '0');
+  document.getElementById('dark-btn').textContent = isDark ? '☀️' : '🌙';
+}
+function initDark() {
+  const saved = localStorage.getItem('skjera_dark');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === '1' || (saved === null && prefersDark)) {
+    document.body.classList.add('dark');
+    const btn = document.getElementById('dark-btn');
+    if (btn) btn.textContent = '☀️';
+  }
+}
+
+function toggleEventsVisibility(childId) {
+  const list = document.getElementById('events-list-' + childId);
+  const hint = document.getElementById('events-hint-' + childId);
+  const btn = document.getElementById('events-toggle-btn-' + childId);
+  const hidden = list.style.display === 'none';
+  list.style.display = hidden ? '' : 'none';
+  if (hint) hint.style.display = hidden ? '' : 'none';
+  btn.textContent = hidden ? '🙈 Skjul' : '👁 Vis';
+}
+
+function showAddModal(childId) {
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('modal-child-id').value = childId;
+  document.getElementById('modal-type').value = 'event';
+  document.getElementById('modal-event-fields').style.display = '';
+  document.getElementById('modal-note-fields').style.display = 'none';
+  document.getElementById('modal-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('modal-title').value = '';
+  document.getElementById('modal-note').value = '';
+  document.getElementById('modal-text').value = '';
+}
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+function switchModalType() {
+  const type = document.getElementById('modal-type').value;
+  document.getElementById('modal-event-fields').style.display = type === 'event' ? '' : 'none';
+  document.getElementById('modal-note-fields').style.display = type === 'note' ? '' : 'none';
+}
+function saveManual() {
+  const childId = document.getElementById('modal-child-id').value;
+  const type = document.getElementById('modal-type').value;
+  if (!state.childData[childId]) return;
+
+  if (type === 'event') {
+    const date = document.getElementById('modal-date').value;
+    const title = document.getElementById('modal-title').value.trim();
+    const note = document.getElementById('modal-note').value.trim();
+    if (!date || !title) { alert('Fyll inn dato og tittel'); return; }
+    state.childData[childId].events.push({ date, title, note, type: 'special', startTime: null, endTime: null, manual: true });
+    state.childData[childId].eventChecked.push(true);
+    renderEvents(childId);
+    show('events-' + childId);
+  } else {
+    const text = document.getElementById('modal-text').value.trim();
+    if (!text) { alert('Skriv inn et notat'); return; }
+    state.childData[childId].homework.push({ subject: 'Notat', task: text, due: null, manual: true });
+    state.childData[childId].hwDone.push(false);
+    renderHW(childId);
+    show('hw-' + childId);
+  }
+  saveState();
+  closeModal();
+}
+
+initDark();
 init();
 </script>
 </body>
