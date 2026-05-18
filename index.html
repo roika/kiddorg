@@ -151,7 +151,7 @@ function addChildOnboard() {
   const inp = document.getElementById('child-name-input');
   const name = inp.value.trim();
   if (!name) return;
-  obChildren.push({ id: Date.now() + Math.random(), name });
+  obChildren.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), name });
   inp.value = '';
   renderObChildren();
   inp.focus();
@@ -286,19 +286,26 @@ function switchTab(id) {
 function renderSettingsChildren() {
   const list = document.getElementById('settings-children-list');
   if (!list) return;
-  list.innerHTML = state.children.map((c, i) =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;">
-      <span style="font-size:15px;">${c.name}</span>
-      <button class="btn btn-sm" style="color:#c00;border-color:#fcc;" onclick="removeChild('${c.id}')">Fjern</button>
-    </div>`
-  ).join('');
+  list.innerHTML = '';
+  state.children.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;';
+    div.innerHTML = '<span style="font-size:15px;">' + c.name + '</span>';
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm';
+    btn.style.cssText = 'color:#c00;border-color:#fcc;';
+    btn.textContent = 'Fjern';
+    btn.addEventListener('click', () => removeChild(c.id));
+    div.appendChild(btn);
+    list.appendChild(div);
+  });
 }
 
 function addChildSettings() {
   const inp = document.getElementById('settings-child-input');
   const name = inp.value.trim();
   if (!name) return;
-  const child = { id: Date.now() + Math.random(), name };
+  const child = { id: Date.now().toString(36) + Math.random().toString(36).slice(2), name };
   state.children.push(child);
   state.childData[child.id] = { events:[], eventChecked:[], homework:[], hwDone:[], summary:'' };
   saveState();
