@@ -45,6 +45,7 @@ body.dark .cal-body { fill: #1e2a4a; stroke: #c8d8f8; }
 body.dark .cal-ring { fill: #c8d8f8; }
 body.dark .cal-cell { fill: #2e3a5a; }
 body.dark .input-row input { background: #22263a; border-color: #3a3f60; color: #e8eaf6; }
+body.dark .add-divider { border-color: #2e3250 !important; }
 body.dark #add-manual-divider-1, body.dark [id^="add-manual-divider-"] { border-color: #2e3250 !important; }
 body.dark .child-row { border-color: #2e3250; }
 body.dark .child-row span { color: #e8eaf6; }
@@ -497,26 +498,56 @@ function buildTabs() {
 
 function buildChildHTML(child) {
   var id = child.id;
-  return '<div class="card"><div class="upload-area" onclick="document.getElementById(\'pdf-' + id + '\').click()">' +
-    '<div style="font-size:32px;margin-bottom:6px;">📄</div>' +
-    '<div class="upload-title">Last opp PDF for ' + child.name + '</div>' +
-    '<div class="upload-sub">Ukeplan, aktivitetsplan eller lekseplan</div>' +
-    '</div><input type="file" id="pdf-' + id + '" accept="application/pdf" style="display:none" onchange="handleFile(this.files[0],\'' + id + '\')"></div>' +
-    '<div class="card"><button class="btn btn-full" onclick="showAddModal(\'' + id + '\')" style="font-size:15px;"><span style="font-size:20px;line-height:1;">＋</span> Legg til manuelt</button></div>' +
+  return (
+    // Status + error
     '<div id="status-' + id + '" style="display:none" class="card"><div class="status-box"><div class="spinner"></div><span id="status-txt-' + id + '">Leser PDF...</span></div></div>' +
     '<div id="error-' + id + '" style="display:none" class="card"><div class="error-box" id="error-txt-' + id + '"></div></div>' +
-    '<div id="summary-' + id + '" style="display:none" class="card"><div class="info-box" id="summary-txt-' + id + '"></div></div>' +
+
+    // ONE card: summary + events + add manually — all hidden/shown together
     '<div id="events-' + id + '" style="display:none" class="card">' +
-    '<div class="row"><h2 style="margin:0">Spesielle dager</h2>' +
-    '<div style="display:flex;gap:6px;">' +
-    '<button id="events-toggle-btn-' + id + '" class="btn btn-sm" onclick="toggleEventsVisibility(\'' + id + '\')">🙈 Skjul</button>' +
-    '<button class="btn btn-sm" onclick="exportICS(\'' + id + '\')">📥 .ics</button>' +
-    '</div></div>' +
-    '<div id="events-list-' + id + '"></div>' +
-    '<p class="hint" id="events-hint-' + id + '">Huk av dagene og trykk «.ics». Åpne filen i Safari for å importere til Kalender.</p></div>' +
+      // Header row with toggle + export
+      '<div class="row" style="margin-bottom:10px;">' +
+        '<h2 style="margin:0">Spesielle dager</h2>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<button id="events-toggle-btn-' + id + '" class="btn btn-sm" onclick="toggleEventsVisibility(\'' + id + '\')">🙈 Skjul</button>' +
+          '<button class="btn btn-sm" onclick="exportICS(\'' + id + '\')">📥 .ics</button>' +
+        '</div>' +
+      '</div>' +
+      // Collapsible inner content
+      '<div id="events-inner-' + id + '">' +
+        // Summary box (shown when PDF analyzed)
+        '<div id="summary-inner-' + id + '" style="display:none;">' +
+          '<div class="info-box" id="summary-txt-' + id + '" style="margin-bottom:12px;"></div>' +
+        '</div>' +
+        // Events list
+        '<div id="events-list-' + id + '"></div>' +
+        // Hint text
+        '<p class="hint" id="events-hint-' + id + '" style="margin-top:8px;">Huk av dagene og trykk «.ics». Åpne filen i Safari for å importere til Kalender.</p>' +
+        // Add manually button — at the bottom of this card
+        '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #e5e5e5;" class="add-divider">' +
+          '<button class="btn btn-full" onclick="showAddModal(\'' + id + '\')" style="font-size:14px;">' +
+            '<span style="font-size:18px;line-height:1;">＋</span> Legg til manuelt' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // Homework card
     '<div id="hw-' + id + '" style="display:none" class="card">' +
-    '<div class="hw-section-title">📚 Lekser</div>' +
-    '<div id="hw-list-' + id + '"></div></div>';
+      '<div class="hw-section-title">📚 Lekser</div>' +
+      '<div id="hw-list-' + id + '"></div>' +
+    '</div>' +
+
+    // Upload card — starts here, moved to bottom after content loads
+    '<div class="card" id="upload-card-' + id + '">' +
+      '<div class="upload-area" onclick="document.getElementById(\'pdf-' + id + '\').click()">' +
+        '<div style="font-size:32px;margin-bottom:6px;">📄</div>' +
+        '<div class="upload-title">Last opp PDF for ' + child.name + '</div>' +
+        '<div class="upload-sub">Ukeplan, aktivitetsplan eller lekseplan</div>' +
+      '</div>' +
+      '<input type="file" id="pdf-' + id + '" accept="application/pdf" style="display:none" onchange="handleFile(this.files[0],\'' + id + '\')">' +
+    '</div>'
+  );
 }
 
 function buildSettingsHTML() {
