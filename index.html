@@ -636,8 +636,13 @@ function analyze(text, childId) {
     return resp.json();
   }).then(function(data) {
     var raw = data.content.map(function(b) { return b.text || ''; }).join('').trim();
+    // Strip markdown code fences if present
+    var clean = raw.replace(/^```[a-z]*\n?/i, '').replace(/```\s*$/,'').trim();
+    // Extract JSON object if wrapped in other text
+    var jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (jsonMatch) clean = jsonMatch[0];
     var parsed;
-    try { parsed = JSON.parse(raw); } catch(e) { throw new Error('Uventet svar fra AI. Prøv igjen.'); }
+    try { parsed = JSON.parse(clean); } catch(e) { throw new Error('Uventet svar fra AI. Prøv igjen.'); }
     var evs = (parsed.events || []).filter(function(e) { return e.date && e.title; });
     var hw = parsed.homework || [];
     state.childData[childId] = {
