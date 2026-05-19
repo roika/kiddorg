@@ -22,10 +22,11 @@ body.dark {
 body.dark .card { background: var(--card) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important; }
 body.dark h1, body.dark h2, body.dark .onboard-title, body.dark .hw-section-title { color: var(--text) !important; }
 body.dark .subtitle, body.dark .upload-sub, body.dark .event-meta, body.dark .hw-meta, body.dark .hint, body.dark .settings-label { color: var(--text2) !important; }
-body.dark .upload-area { background: #22263a !important; }
-body.dark .upload-title { color: #e8eaf6 !important; }
-body.dark .upload-sub { color: #9aa0c0 !important; }
-body.dark .upload-area .upload-icon { color: #9aa0c0 !important; }
+body.dark .upload-area { background: #22263a !important; border-color: #4a4f70 !important; }
+body.dark .upload-area div { color: #ffffff !important; }
+body.dark .upload-title { color: #ffffff !important; font-weight: 600; }
+body.dark .upload-sub { color: #b0b8d8 !important; }
+body.dark .upload-area .upload-icon { color: #b0b8d8 !important; }
 
 body.dark .upload-area-orig { border-color: #3a3f60 !important; }
 body.dark .upload-title, body.dark .hw-text, body.dark .upload-area * { color: var(--text) !important; }
@@ -360,7 +361,7 @@ function buildTabs() {
   const darkBtn = document.createElement('div');
   darkBtn.className = 'tab';
   darkBtn.id = 'dark-btn';
-  darkBtn.style.cssText = 'margin-left:0;';
+  darkBtn.style.cssText = 'font-size:16px;';
   darkBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
   darkBtn.onclick = toggleDark;
   darkBtn.setAttribute('aria-label', 'Toggle dark mode');
@@ -423,7 +424,13 @@ function buildSettingsContent() {
         <button class="btn btn-primary" onclick="addChildSettings()">Legg til</button>
       </div>
     </div>
-  `;
+
+    <div class="card" style="margin-top:0;">
+      <h2 style="color:#c00;">⚠️ Faresone</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Dette sletter alle barn, hendelser og lekser lagret på denne enheten. Kan ikke angres.</p>
+      <button class="btn" onclick="confirmReset()" style="width:100%;justify-content:center;color:#c00;border-color:#fcc;">🗑 Nullstill alt</button>
+    </div>
+  \`;
 }
 
 function switchTab(id) {
@@ -644,6 +651,13 @@ function showError(childId, msg) {
   show('error-' + childId); hide('status-' + childId);
 }
 
+
+function confirmReset() {
+  if (confirm('Er du sikker? Dette sletter alle data på denne enheten og kan ikke angres.')) {
+    try { localStorage.removeItem('skjera_state'); localStorage.removeItem('skjera_dark'); } catch(e) {}
+    location.reload();
+  }
+}
 
 function toggleDark() {
   const isDark = document.body.classList.toggle('dark');
