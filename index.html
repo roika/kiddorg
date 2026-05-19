@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SKJERA</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#9A8BFF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SKJERA">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -855,6 +861,11 @@ function hide(id) { var el = document.getElementById(id); if (el) el.style.displ
 function hideAll(cid) { ['status','error','summary','events','hw'].forEach(function(p) { hide(p+'-'+cid); }); }
 function setStatus(cid, msg) { var el = document.getElementById('status-txt-'+cid); if (el) el.textContent = msg; }
 function showError(cid, msg) { var el = document.getElementById('error-txt-'+cid); if (el) el.textContent = msg; show('error-'+cid); hide('status-'+cid); }
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function() {});
+}
 
 init();
 </script>
