@@ -45,6 +45,7 @@ body.dark .cal-body { fill: #1e2a4a; stroke: #c8d8f8; }
 body.dark .cal-ring { fill: #c8d8f8; }
 body.dark .cal-cell { fill: #2e3a5a; }
 body.dark .input-row input { background: #22263a; border-color: #3a3f60; color: #e8eaf6; }
+body.dark #add-manual-divider-1, body.dark [id^="add-manual-divider-"] { border-color: #2e3250 !important; }
 body.dark .child-row { border-color: #2e3250; }
 body.dark .child-row span { color: #e8eaf6; }
 body.dark select { background: #22263a; border-color: #3a3f60; color: #e8eaf6; }
@@ -146,6 +147,16 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
     <div id="modal-event-fields">
       <label class="settings-label">Dato</label>
       <input type="date" id="modal-date" class="settings-input">
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label class="settings-label">Fra</label>
+          <input type="time" id="modal-start" value="08:15" class="settings-input">
+        </div>
+        <div style="flex:1;">
+          <label class="settings-label">Til</label>
+          <input type="time" id="modal-end" value="13:30" class="settings-input">
+        </div>
+      </div>
       <label class="settings-label">Tittel</label>
       <input type="text" id="modal-title" placeholder="F.eks. Skøytedag" class="settings-input" autocorrect="off">
       <label class="settings-label">Merknad (valgfritt)</label>
@@ -653,9 +664,17 @@ function analyze(text, childId) {
       summary: parsed.summary || ''
     };
     saveLocal(); syncToServer();
-    if (parsed.summary) { document.getElementById('summary-txt-' + childId).textContent = '📋 ' + parsed.summary; show('summary-' + childId); }
+    if (parsed.summary) {
+      document.getElementById('summary-txt-' + childId).textContent = '📋 ' + parsed.summary;
+      var si = document.getElementById('summary-inner-' + childId);
+      if (si) si.style.display = '';
+    }
+    if (evs.length || parsed.summary) { show('events-' + childId); }
     if (evs.length) { renderEvents(childId); show('events-' + childId); }
     if (hw.length) { renderHW(childId); show('hw-' + childId); }
+    // Move upload card to bottom
+    var uc = document.getElementById('upload-card-' + childId);
+    if (uc) { uc.parentNode.appendChild(uc); }
     if (!evs.length && !hw.length) showError(childId, 'Ingen spesielle dager eller lekser funnet.');
   });
 }
@@ -723,12 +742,10 @@ function toggleHW(childId, i) {
   el.querySelector('input').checked = state.childData[childId].hwDone[i];
 }
 function toggleEventsVisibility(childId) {
-  var list = document.getElementById('events-list-' + childId);
-  var hint = document.getElementById('events-hint-' + childId);
+  var inner = document.getElementById('events-inner-' + childId);
   var btn = document.getElementById('events-toggle-btn-' + childId);
-  var hidden = list.style.display === 'none';
-  list.style.display = hidden ? '' : 'none';
-  if (hint) hint.style.display = hidden ? '' : 'none';
+  var hidden = inner.style.display === 'none';
+  inner.style.display = hidden ? '' : 'none';
   btn.textContent = hidden ? '🙈 Skjul' : '👁 Vis';
 }
 
@@ -781,15 +798,23 @@ function saveManual() {
     var title = document.getElementById('modal-title').value.trim();
     var note = document.getElementById('modal-note-field').value.trim();
     if (!date || !title) { alert('Fyll inn dato og tittel'); return; }
-    state.childData[childId].events.push({date:date, title:title, note:note, type:'special', startTime:null, endTime:null});
+    var startTime = document.getElementById('modal-start').value || '08:15';
+    var endTime = document.getElementById('modal-end').value || '13:30';
+    state.childData[childId].events.push({date:date, title:title, note:note, type:'special', startTime:startTime, endTime:endTime});
     state.childData[childId].eventChecked.push(true);
-    renderEvents(childId); show('events-' + childId);
+    renderEvents(childId);
+    show('events-' + childId);
+    var uc = document.getElementById('upload-card-' + childId);
+    if (uc) uc.parentNode.appendChild(uc);
   } else {
     var text = document.getElementById('modal-text').value.trim();
     if (!text) { alert('Skriv inn et notat'); return; }
     state.childData[childId].homework.push({subject:'Notat', task:text, due:null});
     state.childData[childId].hwDone.push(false);
-    renderHW(childId); show('hw-' + childId);
+    renderHW(childId);
+    show('hw-' + childId);
+    var uc2 = document.getElementById('upload-card-' + childId);
+    if (uc2) uc2.parentNode.appendChild(uc2);
   }
   saveLocal(); syncToServer(); closeModal();
 }
