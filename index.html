@@ -8,8 +8,6 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f2f2f7; min-height: 100vh; transition: background 0.2s; }
-
-/* DARK MODE */
 body.dark { background: #0f1117; }
 body.dark .card { background: #1a1d27; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
 body.dark .onboard-card { background: #1a1d27; }
@@ -50,19 +48,30 @@ body.dark .input-row input { background: #22263a; border-color: #3a3f60; color: 
 body.dark .child-row { border-color: #2e3250; }
 body.dark .child-row span { color: #e8eaf6; }
 body.dark select { background: #22263a; border-color: #3a3f60; color: #e8eaf6; }
+body.dark .family-code-box { background: #22263a; border-color: #4a4f70; color: #e8eaf6; }
+body.dark .ob-divider { border-color: #2e3250; }
+body.dark .ob-step { color: #9aa0c0; }
 
-/* ONBOARDING */
 #onboarding { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1rem; }
 .onboard-card { background: #fff; border-radius: 20px; padding: 1.5rem; width: 100%; max-width: 400px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
 .onboard-top { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-.onboard-sub { font-size: 14px; color: #888; text-align: center; margin-bottom: 24px; }
+.onboard-sub { font-size: 14px; color: #888; text-align: center; margin-bottom: 20px; }
 .onboard-error { font-size: 13px; color: #c00; margin-top: 10px; display: none; }
 .children-preview { margin-bottom: 12px; min-height: 32px; }
 .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .input-row input { flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; -webkit-appearance: none; background: #fff; color: #1a1a1a; }
 .input-row input:focus { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+.ob-choice { display: flex; gap: 10px; margin-bottom: 20px; }
+.ob-choice-btn { flex: 1; padding: 14px 8px; border: 2px solid #ddd; border-radius: 14px; background: #fff; cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; color: #555; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.ob-choice-btn.selected { border-color: #007aff; background: #f0f7ff; color: #007aff; }
+body.dark .ob-choice-btn { background: #22263a; border-color: #3a3f60; color: #9aa0c0; }
+body.dark .ob-choice-btn.selected { border-color: #5a4fc0; background: #1a2040; color: #9A8BFF; }
+.ob-divider { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+.ob-step { font-size: 12px; color: #aaa; text-align: center; margin-bottom: 12px; }
+.family-code-box { font-size: 28px; font-weight: 700; letter-spacing: 3px; text-align: center; padding: 16px; background: #f5f5f5; border-radius: 12px; border: 2px dashed #ccc; color: #1a1a1a; margin-bottom: 12px; font-family: monospace; }
+.sync-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #888; padding: 4px 10px; background: #f5f5f5; border-radius: 20px; }
+body.dark .sync-badge { background: #22263a; color: #9aa0c0; }
 
-/* APP */
 #app { display: none; }
 .tab-bar { background: #fff; border-bottom: 1px solid #e5e5e5; display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; position: sticky; top: 0; z-index: 10; }
 .tab-bar::-webkit-scrollbar { display: none; }
@@ -71,39 +80,27 @@ body.dark select { background: #22263a; border-color: #3a3f60; color: #e8eaf6; }
 .tab-spacer { flex: 1; }
 .tab-content { display: none; padding: 1rem; max-width: 500px; margin: 0 auto; padding-bottom: 4rem; }
 .tab-content.active { display: block; }
-
-/* CARDS */
 .card { background: #fff; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
-
-/* UPLOAD */
 .upload-area { border: 2px dashed #ccc; border-radius: 12px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .upload-title { font-size: 15px; font-weight: 600; margin: 8px 0 4px; color: #1a1a1a; }
 .upload-sub { font-size: 13px; color: #888; }
-
-/* STATUS */
 .status-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f5f5f5; border-radius: 10px; font-size: 14px; color: #555; }
 .spinner { width: 18px; height: 18px; border: 2px solid #ddd; border-top-color: #555; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .error-box { padding: 12px 16px; background: #fff0f0; border: 1px solid #fcc; border-radius: 10px; font-size: 14px; color: #c00; }
 .info-box { padding: 12px 16px; background: #f0f7ff; border-radius: 10px; font-size: 13px; color: #336; line-height: 1.5; }
-
-/* EVENTS */
 .event-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; transition: opacity 0.2s; }
 .event-item.unchecked { opacity: 0.4; }
 .event-item input[type=checkbox] { margin-top: 2px; width: 20px; height: 20px; flex-shrink: 0; accent-color: #007aff; }
 .event-title { font-size: 14px; font-weight: 500; color: #1a1a1a; }
 .event-meta { font-size: 12px; color: #888; margin-top: 2px; }
-
-/* HOMEWORK */
 .hw-section-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #1a1a1a; }
 .hw-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; }
 .hw-item input[type=checkbox] { margin-top: 2px; width: 20px; height: 20px; flex-shrink: 0; accent-color: #34c759; }
 .hw-item.done .hw-text { text-decoration: line-through; color: #aaa; }
 .hw-text { font-size: 14px; line-height: 1.4; color: #1a1a1a; }
 .hw-meta { font-size: 12px; color: #888; margin-top: 2px; }
-
-/* BUTTONS */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 10px; border: 1px solid #ddd; background: #fff; font-size: 13px; font-weight: 500; cursor: pointer; color: #333; -webkit-tap-highlight-color: transparent; }
 .btn:active { opacity: 0.7; }
 .btn-primary { background: #007aff; color: #fff; border-color: #007aff; }
@@ -112,15 +109,11 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
 .btn-full { width: 100%; justify-content: center; }
 .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
 .hint { font-size: 12px; color: #999; margin-top: 8px; line-height: 1.5; }
-
-/* TAGS */
 .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; margin-left: 6px; }
 .tag-closed { background: #ffe0e0; color: #c00; }
 .tag-trip { background: #e0f0ff; color: #036; }
 .tag-meeting { background: #f0e8ff; color: #505; }
 .tag-special { background: #fff8e0; color: #760; }
-
-/* SETTINGS */
 .settings-label { font-size: 13px; font-weight: 500; color: #555; display: block; margin-bottom: 6px; }
 .settings-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; outline: none; -webkit-appearance: none; margin-bottom: 12px; background: #fff; color: #1a1a1a; }
 .settings-input:focus { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
@@ -128,8 +121,6 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
 .child-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
 .child-tag { display: inline-flex; align-items: center; gap: 6px; background: #e8f0fe; color: #1a56db; border-radius: 20px; padding: 5px 12px; font-size: 14px; font-weight: 500; margin: 3px; }
 .child-tag button { background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; }
-
-/* MODAL */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
 .modal-overlay.open { display: flex; }
 .modal-inner { background: #fff; border-radius: 20px; padding: 1.5rem; width: 100%; max-width: 400px; }
@@ -139,7 +130,7 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
 </head>
 <body>
 
-<!-- MODAL -->
+<!-- MODAL: Manual add -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal-inner">
     <input type="hidden" id="modal-child-id">
@@ -209,15 +200,53 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
       </svg>
     </div>
     <p class="onboard-sub">Finn spesielle dager og lekser fra barnehage og skole</p>
-    <label class="settings-label">👶 Legg til barn</label>
-    <div class="input-row">
-      <input type="text" id="child-name-input" placeholder="Navn på barnet" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter') addChildOnboard()">
-      <button class="btn btn-primary" onclick="addChildOnboard()">Legg til</button>
-    </div>
-    <div class="children-preview" id="children-preview"></div>
-    <button class="btn btn-primary btn-full" onclick="finishOnboarding()" style="margin-top:4px;">Start appen ➜</button>
-    <p class="onboard-error" id="ob-error"></p>
 
+    <!-- Step 1: Choose new or existing -->
+    <div id="ob-step1">
+      <p class="ob-step">Er dette en ny familie eller har du en familiekode?</p>
+      <div class="ob-choice">
+        <div class="ob-choice-btn selected" id="btn-new" onclick="selectMode('new')">
+          <div style="font-size:24px;margin-bottom:4px;">🏠</div>
+          <div>Ny familie</div>
+        </div>
+        <div class="ob-choice-btn" id="btn-join" onclick="selectMode('join')">
+          <div style="font-size:24px;margin-bottom:4px;">🔗</div>
+          <div>Koble til eksisterende</div>
+        </div>
+      </div>
+
+      <!-- New family: add children -->
+      <div id="ob-new-section">
+        <label class="settings-label">👶 Legg til barn</label>
+        <div class="input-row">
+          <input type="text" id="child-name-input" placeholder="Navn på barnet" autocorrect="off" spellcheck="false">
+          <button class="btn btn-primary" onclick="addChildOnboard()">Legg til</button>
+        </div>
+        <div class="children-preview" id="children-preview"></div>
+        <button class="btn btn-primary btn-full" onclick="createFamily()" style="margin-top:4px;">Opprett familie ➜</button>
+      </div>
+
+      <!-- Join existing family -->
+      <div id="ob-join-section" style="display:none;">
+        <label class="settings-label">🔑 Familiekode</label>
+        <div class="input-row">
+          <input type="text" id="join-code-input" placeholder="F.eks. BJORN-42" autocorrect="off" autocapitalize="characters" spellcheck="false" style="font-family:monospace;font-size:18px;letter-spacing:2px;text-transform:uppercase;">
+          <button class="btn btn-primary" onclick="joinFamily()">Koble til</button>
+        </div>
+      </div>
+
+      <p class="onboard-error" id="ob-error"></p>
+    </div>
+
+    <!-- Step 2: Show family code after creation -->
+    <div id="ob-step2" style="display:none;">
+      <p class="ob-step">🎉 Familie opprettet! Del denne koden med samboer eller besteforeldre:</p>
+      <div class="family-code-box" id="ob-code-display"></div>
+      <p style="font-size:12px;color:#aaa;text-align:center;margin-bottom:16px;line-height:1.5;">
+        De taster inn koden når de åpner SKJERA første gang og ser samme data som deg.
+      </p>
+      <button class="btn btn-primary btn-full" onclick="finishOnboarding()">Start appen ➜</button>
+    </div>
   </div>
 </div>
 
@@ -230,6 +259,7 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
+var BACKEND = 'https://skjera-backend.vercel.app';
 var MONTHS = ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"];
 var DAYS = ["søn","man","tir","ons","tor","fre","lør"];
 var TYPE_ICON = {closed:"🔒",trip:"🚌",meeting:"👥",special:"⭐"};
@@ -237,11 +267,50 @@ var TYPE_LABEL = {closed:"Stengt",trip:"Utflukt",meeting:"Møte",special:"Spesie
 var TYPE_TAG = {closed:"tag-closed",trip:"tag-trip",meeting:"tag-meeting",special:"tag-special"};
 var DEFAULT_START = "08:15";
 var DEFAULT_END = "13:30";
+
 var state = {children:[], childData:{}};
+var familyCode = null;
+var obChildren = [];
+var obMode = 'new';
 
-function saveState() { try { localStorage.setItem('skjera_state', JSON.stringify(state)); } catch(e) {} }
-function loadState() { try { var s = localStorage.getItem('skjera_state'); if (s) state = JSON.parse(s); } catch(e) {} }
+// PERSIST
+function saveLocal() {
+  try {
+    localStorage.setItem('skjera_state', JSON.stringify(state));
+    localStorage.setItem('skjera_code', familyCode || '');
+  } catch(e) {}
+}
+function loadLocal() {
+  try {
+    var s = localStorage.getItem('skjera_state');
+    if (s) state = JSON.parse(s);
+    familyCode = localStorage.getItem('skjera_code') || null;
+  } catch(e) {}
+}
 
+// SYNC
+function syncToServer() {
+  if (!familyCode) return;
+  fetch(BACKEND + '/api/sync', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'save', code: familyCode, data: state})
+  }).catch(function() {});
+}
+
+function syncFromServer() {
+  if (!familyCode) return Promise.resolve();
+  return fetch(BACKEND + '/api/sync', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'load', code: familyCode})
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    if (res.ok && res.data) {
+      state = res.data;
+      saveLocal();
+    }
+  }).catch(function() {});
+}
 
 // DARK MODE
 function toggleDark() {
@@ -258,13 +327,19 @@ function updateDarkBtns(isDark) {
 function initDark() {
   var saved = localStorage.getItem('skjera_dark');
   var sys = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var isDark = saved === '1' || (saved === null && sys);
-  if (isDark) document.body.classList.add('dark');
-  updateDarkBtns(isDark);
+  if (saved === '1' || (saved === null && sys)) document.body.classList.add('dark');
+  updateDarkBtns(document.body.classList.contains('dark'));
 }
 
 // ONBOARDING
-var obChildren = [];
+function selectMode(mode) {
+  obMode = mode;
+  document.getElementById('btn-new').className = 'ob-choice-btn' + (mode === 'new' ? ' selected' : '');
+  document.getElementById('btn-join').className = 'ob-choice-btn' + (mode === 'join' ? ' selected' : '');
+  document.getElementById('ob-new-section').style.display = mode === 'new' ? '' : 'none';
+  document.getElementById('ob-join-section').style.display = mode === 'join' ? '' : 'none';
+}
+
 function addChildOnboard() {
   var inp = document.getElementById('child-name-input');
   var name = inp.value.trim();
@@ -281,13 +356,68 @@ function renderObChildren() {
     return '<span class="child-tag">' + c.name + ' <button onclick="removeObChild(' + i + ')">×</button></span>';
   }).join('');
 }
-function finishOnboarding() {
+
+function createFamily() {
   var err = document.getElementById('ob-error');
   if (obChildren.length === 0) { err.textContent = 'Legg til minst ett barn'; err.style.display = 'block'; return; }
   err.style.display = 'none';
-  state.children = obChildren.slice();
-  state.children.forEach(function(c) { state.childData[c.id] = {events:[], eventChecked:[], homework:[], hwDone:[], summary:''}; });
-  saveState();
+
+  var newState = {children: obChildren.slice(), childData: {}};
+  obChildren.forEach(function(c) { newState.childData[c.id] = {events:[], eventChecked:[], homework:[], hwDone:[], summary:''}; });
+
+  var btn = document.querySelector('#ob-new-section .btn-primary:last-child');
+  btn.textContent = 'Oppretter...';
+  btn.disabled = true;
+
+  fetch(BACKEND + '/api/sync', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'create', data: newState})
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    if (!res.ok) throw new Error(res.error || 'Feil');
+    familyCode = res.code;
+    state = newState;
+    saveLocal();
+    document.getElementById('ob-code-display').textContent = familyCode;
+    document.getElementById('ob-step1').style.display = 'none';
+    document.getElementById('ob-step2').style.display = '';
+  }).catch(function(err2) {
+    btn.textContent = 'Opprett familie ➜';
+    btn.disabled = false;
+    err.textContent = 'Feil: ' + err2.message;
+    err.style.display = 'block';
+  });
+}
+
+function joinFamily() {
+  var code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  var err = document.getElementById('ob-error');
+  if (!code) { err.textContent = 'Skriv inn familiekoden'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+
+  var btn = document.querySelector('#ob-join-section .btn-primary');
+  btn.textContent = 'Kobler til...';
+  btn.disabled = true;
+
+  fetch(BACKEND + '/api/sync', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'load', code: code})
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    if (!res.ok) throw new Error(res.error || 'Fant ikke familie med denne koden');
+    familyCode = code;
+    state = res.data;
+    saveLocal();
+    finishOnboarding();
+  }).catch(function(err2) {
+    btn.textContent = 'Koble til';
+    btn.disabled = false;
+    err.textContent = err2.message;
+    err.style.display = 'block';
+  });
+}
+
+function finishOnboarding() {
   document.getElementById('onboarding').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   buildTabs();
@@ -296,11 +426,15 @@ function finishOnboarding() {
 // INIT
 function init() {
   initDark();
-  loadState();
-  if (state.children && state.children.length > 0) {
+  loadLocal();
+  if (familyCode && state.children && state.children.length > 0) {
     document.getElementById('onboarding').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     buildTabs();
+    // Sync fresh data from server in background
+    syncFromServer().then(function() {
+      buildTabs();
+    });
   }
 }
 
@@ -310,6 +444,7 @@ function buildTabs() {
   var contents = document.getElementById('tab-contents');
   bar.innerHTML = '';
   contents.innerHTML = '';
+
   state.children.forEach(function(child, i) {
     var tab = document.createElement('div');
     tab.className = 'tab' + (i === 0 ? ' active' : '');
@@ -323,21 +458,25 @@ function buildTabs() {
     content.innerHTML = buildChildHTML(child);
     contents.appendChild(content);
   });
+
   var spacer = document.createElement('div');
   spacer.className = 'tab-spacer';
   bar.appendChild(spacer);
+
   var stab = document.createElement('div');
   stab.className = 'tab';
   stab.textContent = '⚙️';
   stab.id = 'tab-btn-settings';
   stab.onclick = function() { switchTab('settings'); };
   bar.appendChild(stab);
+
   var dtab = document.createElement('div');
   dtab.className = 'tab';
   dtab.id = 'dark-btn-tab';
   dtab.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
   dtab.onclick = toggleDark;
   bar.appendChild(dtab);
+
   var sc = document.createElement('div');
   sc.className = 'tab-content';
   sc.id = 'tab-settings';
@@ -370,15 +509,21 @@ function buildChildHTML(child) {
 }
 
 function buildSettingsHTML() {
-  var html = '<div class="card"><h2>⚙️ Innstillinger</h2>';
+  var codeHtml = familyCode
+    ? '<div style="margin-bottom:16px;"><label class="settings-label">👨‍👩‍👧 Familiekode</label>' +
+      '<div class="family-code-box" style="font-size:22px;padding:12px;">' + familyCode + '</div>' +
+      '<p style="font-size:12px;color:#aaa;line-height:1.5;">Del denne koden med samboer eller besteforeldre så de kan se samme data.</p></div>' +
+      '<hr class="settings-divider">'
+    : '';
+  var html = '<div class="card"><h2>⚙️ Innstillinger</h2>' + codeHtml;
   html += '<label class="settings-label">👶 Barn</label>';
   html += '<div id="settings-children-list"></div>';
   html += '<div style="display:flex;gap:8px;margin-top:8px;">';
   html += '<input type="text" id="settings-child-input" placeholder="Navn på nytt barn" autocorrect="off" class="settings-input" style="margin:0;flex:1">';
   html += '<button class="btn btn-primary" onclick="addChildSettings()">Legg til</button></div></div>';
   html += '<div class="card danger-zone"><h2 style="color:#c00;margin-bottom:8px;">⚠️ Faresone</h2>';
-  html += '<p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Sletter alle barn, hendelser og lekser på denne enheten. Kan ikke angres.</p>';
-  html += '<button class="btn btn-danger btn-full" onclick="confirmReset()">🗑 Nullstill alt</button></div>';
+  html += '<p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Kobler fra denne enheten. Andre enheter med samme familiekode beholder dataene sine.</p>';
+  html += '<button class="btn btn-danger btn-full" onclick="confirmReset()">🔌 Koble fra denne enheten</button></div>';
   return html;
 }
 
@@ -391,8 +536,6 @@ function switchTab(id) {
   if (content) content.classList.add('active');
   if (id === 'settings') renderSettingsChildren();
 }
-
-
 
 function renderSettingsChildren() {
   var list = document.getElementById('settings-children-list');
@@ -411,7 +554,6 @@ function renderSettingsChildren() {
     div.appendChild(span); div.appendChild(btn);
     list.appendChild(div);
   });
-
 }
 
 function addChildSettings() {
@@ -421,7 +563,8 @@ function addChildSettings() {
   var child = {id: Date.now().toString(36) + Math.random().toString(36).slice(2), name: name};
   state.children.push(child);
   state.childData[child.id] = {events:[], eventChecked:[], homework:[], hwDone:[], summary:''};
-  saveState(); inp.value = '';
+  saveLocal(); syncToServer();
+  inp.value = '';
   buildTabs(); switchTab('settings');
 }
 
@@ -429,20 +572,20 @@ function removeChild(id) {
   if (state.children.length <= 1) { alert('Du må ha minst ett barn i appen.'); return; }
   state.children = state.children.filter(function(c) { return c.id !== id; });
   delete state.childData[id];
-  saveState(); buildTabs();
+  saveLocal(); syncToServer();
+  buildTabs();
 }
 
 function confirmReset() {
-  if (confirm('Er du sikker? Dette sletter alle data og kan ikke angres.')) {
-    try { localStorage.removeItem('skjera_state'); localStorage.removeItem('skjera_dark'); localStorage.removeItem('skjera_apikey'); } catch(e) {}
+  if (confirm('Dette kobler fra denne enheten. Andre med samme familiekode beholder dataene. Fortsette?')) {
+    try { localStorage.removeItem('skjera_state'); localStorage.removeItem('skjera_dark'); localStorage.removeItem('skjera_code'); } catch(e) {}
     location.reload();
   }
 }
 
-// FILE
+// FILE HANDLING
 function handleFile(file, childId) {
   if (!file) return;
-
   hideAll(childId);
   show('status-' + childId);
   setStatus(childId, 'Leser PDF...');
@@ -484,7 +627,7 @@ function analyze(text, childId) {
     '"homework":[{"subject":"Fag","task":"Oppgave","due":"YYYY-MM-DD eller null"}],"summary":"En setning"}\n\n' +
     'Dagens dato: ' + today + '\n\nPDF:\n' + text.slice(0, 7000);
 
-  return fetch('https://skjera-backend.vercel.app/api/analyze', {
+  return fetch(BACKEND + '/api/analyze', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({model: 'claude-sonnet-4-6', max_tokens: 1500, messages: [{role: 'user', content: prompt}]})
@@ -502,7 +645,7 @@ function analyze(text, childId) {
       homework: hw, hwDone: hw.map(function() { return false; }),
       summary: parsed.summary || ''
     };
-    saveState();
+    saveLocal(); syncToServer();
     if (parsed.summary) { document.getElementById('summary-txt-' + childId).textContent = '📋 ' + parsed.summary; show('summary-' + childId); }
     if (evs.length) { renderEvents(childId); show('events-' + childId); }
     if (hw.length) { renderHW(childId); show('hw-' + childId); }
@@ -560,14 +703,14 @@ function renderHW(childId) {
 
 function toggleEv(childId, i) {
   state.childData[childId].eventChecked[i] = !state.childData[childId].eventChecked[i];
-  saveState();
+  saveLocal(); syncToServer();
   var el = document.getElementById('ev-' + childId + '-' + i);
   if (state.childData[childId].eventChecked[i]) el.classList.remove('unchecked'); else el.classList.add('unchecked');
   el.querySelector('input').checked = state.childData[childId].eventChecked[i];
 }
 function toggleHW(childId, i) {
   state.childData[childId].hwDone[i] = !state.childData[childId].hwDone[i];
-  saveState();
+  saveLocal(); syncToServer();
   var el = document.getElementById('hw-' + childId + '-' + i);
   if (state.childData[childId].hwDone[i]) el.classList.add('done'); else el.classList.remove('done');
   el.querySelector('input').checked = state.childData[childId].hwDone[i];
@@ -641,7 +784,7 @@ function saveManual() {
     state.childData[childId].hwDone.push(false);
     renderHW(childId); show('hw-' + childId);
   }
-  saveState(); closeModal();
+  saveLocal(); syncToServer(); closeModal();
 }
 
 function show(id) { var el = document.getElementById(id); if (el) el.style.display = ''; }
