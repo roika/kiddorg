@@ -217,7 +217,7 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
         </g>
       </svg>
     </div>
-    <p class="onboard-sub">Finn viktige hendelser fra ukeplaner, lekseplaner eller andre oversikter i PDF format.</p>
+    <p class="onboard-sub">Finn spesielle dager og lekser fra barnehage og skole</p>
 
     <!-- Step 1: Choose new or existing -->
     <div id="ob-step1">
@@ -513,7 +513,7 @@ function buildChildHTML(child) {
     '<div id="events-' + id + '" style="display:none" class="card">' +
       // Header row with toggle + export
       '<div class="row" style="margin-bottom:10px;">' +
-        '<h2 style="margin:0">Huskeliste dager</h2>' +
+        '<h2 style="margin:0">Spesielle dager</h2>' +
         '<div style="display:flex;gap:6px;">' +
           '<button id="events-toggle-btn-' + id + '" class="btn btn-sm" onclick="toggleEventsVisibility(\'' + id + '\')">🙈 Skjul</button>' +
           '<button class="btn btn-sm" onclick="exportICS(\'' + id + '\')">📥 .ics</button>' +
@@ -569,6 +569,7 @@ function buildSettingsHTML() {
   html += '<div style="display:flex;gap:8px;margin-top:8px;">';
   html += '<input type="text" id="settings-child-input" placeholder="Navn på nytt barn" autocorrect="off" class="settings-input" style="margin:0;flex:1">';
   html += '<button class="btn btn-primary" onclick="addChildSettings()">Legg til</button></div></div>';
+  html += '<div class="card"><button class="btn btn-full" onclick="manualSync()" id="sync-btn" style="font-size:14px;">🔄 Hent siste data fra sky</button></div>';
   html += '<div class="card danger-zone"><h2 style="color:#c00;margin-bottom:8px;">⚠️ Faresone</h2>';
   html += '<p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Kobler fra denne enheten. Andre enheter med samme familiekode beholder dataene sine.</p>';
   html += '<button class="btn btn-danger btn-full" onclick="confirmReset()">🔌 Koble fra denne enheten</button></div>';
@@ -865,6 +866,34 @@ function showError(cid, msg) { var el = document.getElementById('error-txt-'+cid
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(function() {});
+}
+
+// Sync from server when app comes to foreground
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && familyCode) {
+    syncFromServer().then(function() {
+      buildTabs();
+    });
+  }
+});
+
+// Manual sync button
+function manualSync() {
+  var btn = document.getElementById('sync-btn');
+  if (btn) { btn.textContent = '⏳ Henter...'; btn.disabled = true; }
+  syncFromServer().then(function() {
+    buildTabs();
+    switchTab('settings');
+    var btn2 = document.getElementById('sync-btn');
+    if (btn2) { btn2.textContent = '✅ Oppdatert!'; btn2.disabled = false; }
+    setTimeout(function() {
+      var btn3 = document.getElementById('sync-btn');
+      if (btn3) btn3.textContent = '🔄 Hent siste data fra sky';
+    }, 2000);
+  }).catch(function() {
+    var btn2 = document.getElementById('sync-btn');
+    if (btn2) { btn2.textContent = '❌ Feil – prøv igjen'; btn2.disabled = false; }
+  });
 }
 
 init();
