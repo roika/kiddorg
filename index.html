@@ -488,13 +488,24 @@ function renderAllChildren() {
 function init() {
   initDark();
   loadLocal();
+
+  // Auto-join from URL ?kode=
+  var pendingCode = localStorage.getItem('skjera_pending_code');
+  if (pendingCode && !familyCode) {
+    localStorage.removeItem('skjera_pending_code');
+    // Pre-fill join code and trigger join
+    selectMode('join');
+    var inp = document.getElementById('join-code-input');
+    if (inp) inp.value = pendingCode;
+    joinFamily();
+    return;
+  }
+
   if (familyCode && state.children && state.children.length > 0) {
     document.getElementById('onboarding').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     buildTabs();
-    // Render local data immediately
     renderAllChildren();
-    // Then sync from server in background and re-render
     syncFromServer().then(function() {
       renderAllChildren();
     });
@@ -594,7 +605,7 @@ function buildChildHTML(child) {
       '<div class="upload-area" onclick="document.getElementById(\'pdf-' + id + '\').click()">' +
         '<div style="font-size:32px;margin-bottom:6px;">📄</div>' +
         '<div class="upload-title">Last opp PDF for ' + child.name + '</div>' +
-        '<div class="upload-sub">Ukeplan, aktivitetsplan eller lekseplan</div>' +
+        '<div class="upload-sub">PDF, eller bilde/skjermbilde av ukeplan</div>' +
       '</div>' +
       '<input type="file" id="pdf-' + id + '" accept="application/pdf" style="display:none" onchange="handleFile(this.files[0],\'' + id + '\')">' +
     '</div>'
@@ -605,7 +616,8 @@ function buildSettingsHTML() {
   var codeHtml = familyCode
     ? '<div style="margin-bottom:16px;"><label class="settings-label">👨‍👩‍👧 Familiekode</label>' +
       '<div class="family-code-box" style="font-size:22px;padding:12px;">' + familyCode + '</div>' +
-      '<p style="font-size:12px;color:#aaa;line-height:1.5;">Del denne koden med samboer eller besteforeldre så de kan se samme data.</p></div>' +
+      '<button class="btn btn-full" onclick="shareFamily()" style="margin-top:8px;font-size:14px;">📤 Del invitasjon via SMS</button>' +
+      '<p style="font-size:12px;color:#aaa;line-height:1.5;margin-top:8px;">Del koden med samboer eller besteforeldre så de kan se samme data.</p></div>' +
       '<hr class="settings-divider">'
     : '';
   var html = '<div class="card"><h2>⚙️ Innstillinger</h2>' + codeHtml;
@@ -670,6 +682,21 @@ function removeChild(id) {
   buildTabs();
 }
 
+function shareFamily() {
+  var url = 'https://roika.github.io/skjera/?kode=' + familyCode;
+  var msg = 'Hei! Koble til vår SKJERA-familie: ' + url + ' (kode: ' + familyCode + ')';
+  if (navigator.share) {
+    navigator.share({ title: 'SKJERA - Familiekode', text: msg, url: url }).catch(function() {});
+  } else {
+    // Fallback: copy to clipboard
+    navigator.clipboard.writeText(msg).then(function() {
+      alert('Lenke kopiert! Lim den inn i en SMS.');
+    }).catch(function() {
+      prompt('Kopier denne lenken og send på SMS:', url);
+    });
+  }
+}
+
 function confirmReset() {
   if (confirm('Dette kobler fra denne enheten. Andre med samme familiekode beholder dataene. Fortsette?')) {
     try { localStorage.removeItem('skjera_state'); localStorage.removeItem('skjera_dark'); localStorage.removeItem('skjera_code'); } catch(e) {}
@@ -682,15 +709,92 @@ function handleFile(file, childId) {
   if (!file) return;
   hideAll(childId);
   show('status-' + childId);
-  setStatus(childId, 'Leser PDF...');
-  extractText(file).then(function(text) {
-    if (!text || text.trim().length < 20) throw new Error('Kunne ikke lese tekst fra PDF-en.');
-    setStatus(childId, 'Analyserer med AI... ✨');
-    return analyze(text, childId);
-  }).catch(function(err) {
-    showError(childId, 'Feil: ' + err.message);
-  }).finally(function() {
-    hide('status-' + childId);
+  var isImage = file.type.startsWith('image/');
+  if (isImage) {
+    setStatus(childId, 'Leser bilde...');
+    analyzeImage(file, childId).catch(function(err) {
+      showError(childId, 'Feil: ' + err.message);
+    }).finally(function() {
+      hide('status-' + childId);
+    });
+  } else {
+    setStatus(childId, 'Leser PDF...');
+    extractText(file).then(function(text) {
+      if (!text || text.trim().length < 20) throw new Error('Kunne ikke lese tekst fra PDF-en.');
+      setStatus(childId, 'Analyserer med AI... ✨');
+      return analyze(text, childId);
+    }).catch(function(err) {
+      showError(childId, 'Feil: ' + err.message);
+    }).finally(function() {
+      hide('status-' + childId);
+    });
+  }
+}
+
+function analyzeImage(file, childId) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(',')[1];
+      var mediaType = file.type;
+      setStatus(childId, 'Analyserer bilde med AI... ✨');
+      var today = new Date().toISOString().slice(0,10);
+      var p1 = 'Du er en assistent som hjelper norske foreldre finne viktige dager fra skole/barnehage.';
+      var p2 = 'Se pa bildet og finn: 1. Spesielle dager (utflukter, stengt, planleggingsdager, foreldremøter, husk utstyr osv). IKKE vanlige dager. 2. Lekser.';
+      var p3 = 'Bruk tider fra dokumentet, ellers "08:15"/"13:30". Svar KUN med JSON: {"events":[{"date":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM","title":"Tittel","note":"Merknad","type":"special|closed|trip|meeting"}],"homework":[{"subject":"Fag","task":"Oppgave","due":"YYYY-MM-DD eller null"}],"summary":"En setning"}';
+      var p4 = 'Dagens dato: ' + today;
+      var prompt = p1 + ' ' + p2 + ' ' + p3 + ' ' + p4;
+
+      fetch(BACKEND + '/api/analyze', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      }).then(function(resp) {
+        if (!resp.ok) return resp.json().then(function(e) { throw new Error(e.error ? e.error.message : 'Feil ' + resp.status); });
+        return resp.json();
+      }).then(function(data) {
+        var raw = data.content.map(function(b) { return b.text || ''; }).join('').trim();
+        var clean = raw.replace(/^```[a-zA-Z]*/,'').replace(/```$/,'').trim();
+        var jsonMatch = clean.match(/[\s\S]*/) && clean.match(/{[\s\S]*}/);
+        if (jsonMatch) clean = jsonMatch[0];
+        var parsed;
+        try { parsed = JSON.parse(clean); } catch(e) { throw new Error('AI-svar kunne ikke tolkes: ' + clean.slice(0,120)); }
+        var evs = (parsed.events || []).filter(function(e) { return e.date && e.title; });
+        var hw = parsed.homework || [];
+        state.childData[childId] = {
+          events: evs, eventChecked: evs.map(function() { return true; }),
+          homework: hw, hwDone: hw.map(function() { return false; }),
+          summary: parsed.summary || ''
+        };
+        saveLocal();
+        if (parsed.summary) {
+          var si = document.getElementById('summary-inner-' + childId);
+          var st = document.getElementById('summary-txt-' + childId);
+          if (si) si.style.display = '';
+          if (st) st.textContent = '📋 ' + parsed.summary;
+        }
+        if (evs.length || parsed.summary) show('events-' + childId);
+        if (evs.length) renderEvents(childId);
+        if (hw.length) { renderHW(childId); show('hw-' + childId); }
+        if (!evs.length && !hw.length) showError(childId, 'Ingen spesielle dager eller lekser funnet i bildet.');
+        var uc = document.getElementById('upload-card-' + childId);
+        if (uc) uc.parentNode.appendChild(uc);
+        syncToServer();
+        resolve();
+      }).catch(reject);
+    };
+    reader.onerror = function() { reject(new Error('Kunne ikke lese bildet')); };
+    reader.readAsDataURL(file);
   });
 }
 
@@ -914,6 +1018,15 @@ function showError(cid, msg) { var el = document.getElementById('error-txt-'+cid
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(function() {});
 }
+
+// Check URL for shared family code ?kode=XXXX-99
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var urlCode = params.get('kode');
+  if (urlCode && !localStorage.getItem('skjera_code')) {
+    localStorage.setItem('skjera_pending_code', urlCode.toUpperCase().trim());
+  }
+})();
 
 // Sync from server when app comes to foreground
 document.addEventListener('visibilitychange', function() {
