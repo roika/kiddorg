@@ -443,6 +443,7 @@ function joinFamily() {
     state = res.data;
     saveLocal();
     finishOnboarding();
+    renderAllChildren();
   }).catch(function(err2) {
     btn.textContent = 'Koble til';
     btn.disabled = false;
