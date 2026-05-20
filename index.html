@@ -324,7 +324,23 @@ function syncFromServer() {
     body: JSON.stringify({action: 'load', code: familyCode})
   }).then(function(r) { return r.json(); }).then(function(res) {
     if (res.ok && res.data) {
-      state = res.data;
+      // Merge: keep local data if server has nothing for a child
+      var serverData = res.data;
+      if (serverData.children) {
+        serverData.children.forEach(function(c) {
+          var localChild = state.childData && state.childData[c.id];
+          var serverChild = serverData.childData && serverData.childData[c.id];
+          if (localChild && serverChild) {
+            // Use whichever has more events/homework
+            var localEvents = (localChild.events || []).length;
+            var serverEvents = (serverChild.events || []).length;
+            if (localEvents > serverEvents) {
+              serverData.childData[c.id] = localChild;
+            }
+          }
+        });
+      }
+      state = serverData;
       saveLocal();
     }
   }).catch(function() {});
@@ -701,7 +717,8 @@ function analyze(text, childId) {
       homework: hw, hwDone: hw.map(function() { return false; }),
       summary: parsed.summary || ''
     };
-    saveLocal(); syncToServer();
+    saveLocal();
+    syncToServer();
     if (parsed.summary) {
       document.getElementById('summary-txt-' + childId).textContent = '📋 ' + parsed.summary;
       var si = document.getElementById('summary-inner-' + childId);
@@ -872,7 +889,18 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'visible' && familyCode) {
     syncFromServer().then(function() {
-      buildTabs();
+      state.children.forEach(function(child) {
+        var d = state.childData[child.id];
+        if (!d) return;
+        if (d.events && d.events.length) { renderEvents(child.id); show('events-' + child.id); }
+        if (d.summary) {
+          var si = document.getElementById('summary-inner-' + child.id);
+          var st = document.getElementById('summary-txt-' + child.id);
+          if (si) si.style.display = '';
+          if (st) st.textContent = '📋 ' + d.summary;
+        }
+        if (d.homework && d.homework.length) { renderHW(child.id); show('hw-' + child.id); }
+      });
     });
   }
 });
@@ -882,8 +910,25 @@ function manualSync() {
   var btn = document.getElementById('sync-btn');
   if (btn) { btn.textContent = '⏳ Henter...'; btn.disabled = true; }
   syncFromServer().then(function() {
-    buildTabs();
-    switchTab('settings');
+    // Re-render each child's content without rebuilding tabs
+    state.children.forEach(function(child) {
+      var d = state.childData[child.id];
+      if (!d) return;
+      if (d.events && d.events.length) {
+        renderEvents(child.id);
+        show('events-' + child.id);
+      }
+      if (d.summary) {
+        var si = document.getElementById('summary-inner-' + child.id);
+        var st = document.getElementById('summary-txt-' + child.id);
+        if (si) si.style.display = '';
+        if (st) st.textContent = '📋 ' + d.summary;
+      }
+      if (d.homework && d.homework.length) {
+        renderHW(child.id);
+        show('hw-' + child.id);
+      }
+    });
     var btn2 = document.getElementById('sync-btn');
     if (btn2) { btn2.textContent = '✅ Oppdatert!'; btn2.disabled = false; }
     setTimeout(function() {
