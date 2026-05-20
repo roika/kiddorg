@@ -177,6 +177,27 @@ h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #1a1a1a; }
   </div>
 </div>
 
+<!-- UPLOAD PICKER MODAL -->
+<div class="modal-overlay" id="upload-picker-modal">
+  <div class="modal-inner" style="max-width:320px;">
+    <div class="modal-header">
+      <h2 style="margin:0;font-size:17px;">Velg kilde</h2>
+      <button class="modal-close" onclick="closeUploadPicker()">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+      <button class="btn btn-full" onclick="triggerUpload('gallery')" style="font-size:15px;padding:14px;">
+        🖼️ Galleri / Bilder
+      </button>
+      <button class="btn btn-full" onclick="triggerUpload('file')" style="font-size:15px;padding:14px;">
+        📁 Filer (PDF)
+      </button>
+      <button class="btn btn-full" onclick="triggerUpload('camera')" style="font-size:15px;padding:14px;">
+        📷 Ta bilde nå
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ONBOARDING -->
 <div id="onboarding">
   <div class="onboard-card">
@@ -569,7 +590,7 @@ function buildChildHTML(child) {
     '<div id="events-' + id + '" style="display:none" class="card">' +
       // Header row with toggle + export
       '<div class="row" style="margin-bottom:10px;">' +
-        '<h2 style="margin:0">Spesielle dager</h2>' +
+        '<h2 style="margin:0">Dette er det som skjer:</h2>' +
         '<div style="display:flex;gap:6px;">' +
           '<button id="events-toggle-btn-' + id + '" class="btn btn-sm" onclick="toggleEventsVisibility(\'' + id + '\')">🙈 Skjul</button>' +
           '<button class="btn btn-sm" onclick="exportICS(\'' + id + '\')">📥 .ics</button>' +
@@ -680,6 +701,31 @@ function removeChild(id) {
   delete state.childData[id];
   saveLocal(); syncToServer();
   buildTabs();
+}
+
+var currentUploadChildId = null;
+
+function showUploadPicker(childId) {
+  currentUploadChildId = childId;
+  document.getElementById('upload-picker-modal').classList.add('open');
+}
+
+function closeUploadPicker() {
+  document.getElementById('upload-picker-modal').classList.remove('open');
+  currentUploadChildId = null;
+}
+
+function triggerUpload(type) {
+  closeUploadPicker();
+  if (!currentUploadChildId) return;
+  var id = currentUploadChildId;
+  if (type === 'gallery') {
+    document.getElementById('img-gallery-' + id).click();
+  } else if (type === 'file') {
+    document.getElementById('pdf-' + id).click();
+  } else if (type === 'camera') {
+    document.getElementById('img-camera-' + id).click();
+  }
 }
 
 function shareFamily() {
