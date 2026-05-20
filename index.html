@@ -458,6 +458,32 @@ function finishOnboarding() {
 }
 
 // INIT
+function renderAllChildren() {
+  state.children.forEach(function(child) {
+    var d = state.childData[child.id];
+    if (!d) return;
+    if ((d.events && d.events.length) || d.summary) {
+      show('events-' + child.id);
+      if (d.events && d.events.length) renderEvents(child.id);
+      if (d.summary) {
+        var si = document.getElementById('summary-inner-' + child.id);
+        var st = document.getElementById('summary-txt-' + child.id);
+        if (si) si.style.display = '';
+        if (st) st.textContent = '📋 ' + d.summary;
+      }
+      // Move upload card to bottom
+      var uc = document.getElementById('upload-card-' + child.id);
+      if (uc) uc.parentNode.appendChild(uc);
+    }
+    if (d.homework && d.homework.length) {
+      renderHW(child.id);
+      show('hw-' + child.id);
+      var uc2 = document.getElementById('upload-card-' + child.id);
+      if (uc2) uc2.parentNode.appendChild(uc2);
+    }
+  });
+}
+
 function init() {
   initDark();
   loadLocal();
@@ -465,9 +491,11 @@ function init() {
     document.getElementById('onboarding').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     buildTabs();
-    // Sync fresh data from server in background
+    // Render local data immediately
+    renderAllChildren();
+    // Then sync from server in background and re-render
     syncFromServer().then(function() {
-      buildTabs();
+      renderAllChildren();
     });
   }
 }
@@ -718,7 +746,6 @@ function analyze(text, childId) {
       summary: parsed.summary || ''
     };
     saveLocal();
-    syncToServer();
     if (parsed.summary) {
       document.getElementById('summary-txt-' + childId).textContent = '📋 ' + parsed.summary;
       var si = document.getElementById('summary-inner-' + childId);
@@ -731,6 +758,8 @@ function analyze(text, childId) {
     var uc = document.getElementById('upload-card-' + childId);
     if (uc) { uc.parentNode.appendChild(uc); }
     if (!evs.length && !hw.length) showError(childId, 'Ingen spesielle dager eller lekser funnet.');
+    // Sync to server after all rendering is done
+    syncToServer();
   });
 }
 
@@ -889,18 +918,7 @@ if ('serviceWorker' in navigator) {
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'visible' && familyCode) {
     syncFromServer().then(function() {
-      state.children.forEach(function(child) {
-        var d = state.childData[child.id];
-        if (!d) return;
-        if (d.events && d.events.length) { renderEvents(child.id); show('events-' + child.id); }
-        if (d.summary) {
-          var si = document.getElementById('summary-inner-' + child.id);
-          var st = document.getElementById('summary-txt-' + child.id);
-          if (si) si.style.display = '';
-          if (st) st.textContent = '📋 ' + d.summary;
-        }
-        if (d.homework && d.homework.length) { renderHW(child.id); show('hw-' + child.id); }
-      });
+      renderAllChildren();
     });
   }
 });
@@ -910,25 +928,7 @@ function manualSync() {
   var btn = document.getElementById('sync-btn');
   if (btn) { btn.textContent = '⏳ Henter...'; btn.disabled = true; }
   syncFromServer().then(function() {
-    // Re-render each child's content without rebuilding tabs
-    state.children.forEach(function(child) {
-      var d = state.childData[child.id];
-      if (!d) return;
-      if (d.events && d.events.length) {
-        renderEvents(child.id);
-        show('events-' + child.id);
-      }
-      if (d.summary) {
-        var si = document.getElementById('summary-inner-' + child.id);
-        var st = document.getElementById('summary-txt-' + child.id);
-        if (si) si.style.display = '';
-        if (st) st.textContent = '📋 ' + d.summary;
-      }
-      if (d.homework && d.homework.length) {
-        renderHW(child.id);
-        show('hw-' + child.id);
-      }
-    });
+    renderAllChildren();
     var btn2 = document.getElementById('sync-btn');
     if (btn2) { btn2.textContent = '✅ Oppdatert!'; btn2.disabled = false; }
     setTimeout(function() {
