@@ -582,13 +582,9 @@ function buildTabs() {
 function buildChildHTML(child) {
   var id = child.id;
   return (
-    // Status + error
-    '<div id="status-' + id + '" style="display:none" class="card"><div class="status-box"><div class="spinner"></div><span id="status-txt-' + id + '">Leser PDF...</span></div></div>' +
+    '<div id="status-' + id + '" style="display:none" class="card"><div class="status-box"><div class="spinner"></div><span id="status-txt-' + id + '">Leser...</span></div></div>' +
     '<div id="error-' + id + '" style="display:none" class="card"><div class="error-box" id="error-txt-' + id + '"></div></div>' +
-
-    // ONE card: summary + events + add manually — all hidden/shown together
     '<div id="events-' + id + '" style="display:none" class="card">' +
-      // Header row with toggle + export
       '<div class="row" style="margin-bottom:10px;">' +
         '<h2 style="margin:0">Dette er det som skjer:</h2>' +
         '<div style="display:flex;gap:6px;">' +
@@ -596,17 +592,12 @@ function buildChildHTML(child) {
           '<button class="btn btn-sm" onclick="exportICS(\'' + id + '\')">📥 .ics</button>' +
         '</div>' +
       '</div>' +
-      // Collapsible inner content
       '<div id="events-inner-' + id + '">' +
-        // Summary box (shown when PDF analyzed)
         '<div id="summary-inner-' + id + '" style="display:none;">' +
           '<div class="info-box" id="summary-txt-' + id + '" style="margin-bottom:12px;"></div>' +
         '</div>' +
-        // Events list
         '<div id="events-list-' + id + '"></div>' +
-        // Hint text
         '<p class="hint" id="events-hint-' + id + '" style="margin-top:8px;">Huk av dagene og trykk «.ics». Åpne filen i Safari for å importere til Kalender.</p>' +
-        // Add manually button — at the bottom of this card
         '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #e5e5e5;" class="add-divider">' +
           '<button class="btn btn-full" onclick="showAddModal(\'' + id + '\')" style="font-size:14px;">' +
             '<span style="font-size:18px;line-height:1;">＋</span> Legg til manuelt' +
@@ -614,21 +605,19 @@ function buildChildHTML(child) {
         '</div>' +
       '</div>' +
     '</div>' +
-
-    // Homework card
     '<div id="hw-' + id + '" style="display:none" class="card">' +
       '<div class="hw-section-title">📚 Lekser</div>' +
       '<div id="hw-list-' + id + '"></div>' +
     '</div>' +
-
-    // Upload card — starts here, moved to bottom after content loads
     '<div class="card" id="upload-card-' + id + '">' +
-      '<div class="upload-area" onclick="document.getElementById(\'pdf-' + id + '\').click()">' +
+      '<div class="upload-area" onclick="showUploadPicker(\'' + id + '\')">' +
         '<div style="font-size:32px;margin-bottom:6px;">📄</div>' +
-        '<div class="upload-title">Last opp PDF for ' + child.name + '</div>' +
-        '<div class="upload-sub">PDF, eller bilde/skjermbilde av ukeplan</div>' +
+        '<div class="upload-title">Last opp for ' + child.name + '</div>' +
+        '<div class="upload-sub">Trykk for å velge kilde</div>' +
       '</div>' +
       '<input type="file" id="pdf-' + id + '" accept="application/pdf" style="display:none" onchange="handleFile(this.files[0],\'' + id + '\')">' +
+      '<input type="file" id="img-gallery-' + id + '" accept="image/*" style="display:none" onchange="handleFile(this.files[0],\'' + id + '\')">' +
+      '<input type="file" id="img-camera-' + id + '" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this.files[0],\'' + id + '\')">' +
     '</div>'
   );
 }
