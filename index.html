@@ -705,16 +705,19 @@ function closeUploadPicker() {
 }
 
 function triggerUpload(type) {
-  closeUploadPicker();
-  if (!currentUploadChildId) return;
   var id = currentUploadChildId;
-  if (type === 'gallery') {
-    document.getElementById('img-gallery-' + id).click();
-  } else if (type === 'file') {
-    document.getElementById('pdf-' + id).click();
-  } else if (type === 'camera') {
-    document.getElementById('img-camera-' + id).click();
-  }
+  if (!id) return;
+  closeUploadPicker();
+  // Small delay so modal closes before file dialog opens
+  setTimeout(function() {
+    if (type === 'gallery') {
+      document.getElementById('img-gallery-' + id).click();
+    } else if (type === 'file') {
+      document.getElementById('pdf-' + id).click();
+    } else if (type === 'camera') {
+      document.getElementById('img-camera-' + id).click();
+    }
+  }, 100);
 }
 
 function shareFamily() {
