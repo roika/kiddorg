@@ -983,13 +983,21 @@ function exportICS(childId) {
   hide('error-' + childId);
   var child = state.children.find(function(c) { return c.id === childId; });
   var ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nCALSCALE:GREGORIAN\r\nPRODID:-//SKJERA//NO\r\n';
+  // Add Europe/Oslo timezone definition
+  ics += 'BEGIN:VTIMEZONE\r\nTZID:Europe/Oslo\r\n';
+  ics += 'BEGIN:DAYLIGHT\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nTZNAME:CEST\r\nDTSTART:19700329T020000\r\nRRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3\r\nEND:DAYLIGHT\r\n';
+  ics += 'BEGIN:STANDARD\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nTZNAME:CET\r\nDTSTART:19701025T030000\r\nRRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10\r\nEND:STANDARD\r\n';
+  ics += 'END:VTIMEZONE\r\n';
   selected.forEach(function(ev) {
     var ds = ev.date.replace(/-/g,'');
     var st = (ev.startTime || DEFAULT_START).replace(':','') + '00';
     var et = (ev.endTime || DEFAULT_END).replace(':','') + '00';
     var uid = ds + '-' + Math.random().toString(36).slice(2) + '@skjera';
     var title = (child ? child.name + ': ' : '') + ev.title;
-    ics += 'BEGIN:VEVENT\r\nUID:' + uid + '\r\nDTSTART:' + ds + 'T' + st + '\r\nDTEND:' + ds + 'T' + et + '\r\nSUMMARY:' + title + '\r\nDESCRIPTION:' + (ev.note||'') + '\r\nEND:VEVENT\r\n';
+    ics += 'BEGIN:VEVENT\r\nUID:' + uid + '\r\n';
+    ics += 'DTSTART;TZID=Europe/Oslo:' + ds + 'T' + st + '\r\n';
+    ics += 'DTEND;TZID=Europe/Oslo:' + ds + 'T' + et + '\r\n';
+    ics += 'SUMMARY:' + title + '\r\nDESCRIPTION:' + (ev.note||'') + '\r\nEND:VEVENT\r\n';
   });
   ics += 'END:VCALENDAR';
   var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
