@@ -807,12 +807,46 @@ function analyzeImage(file, childId) {
         if (jsonMatch) clean = jsonMatch[0];
         var parsed;
         try { parsed = JSON.parse(clean); } catch(e) { throw new Error('AI-svar kunne ikke tolkes: ' + clean.slice(0,120)); }
-        var evs = (parsed.events || []).filter(function(e) { return e.date && e.title; });
-        var hw = parsed.homework || [];
+        var today2 = new Date().toISOString().slice(0,10);
+        var newEvs2 = (parsed.events || []).filter(function(e) { return e.date && e.title; });
+        var newHw2 = parsed.homework || [];
+
+        var existing2 = state.childData[childId] || {events:[], eventChecked:[], homework:[], hwDone:[], summary:''};
+
+        var keptEvents2 = [];
+        var keptChecked2 = [];
+        (existing2.events || []).forEach(function(ev, i) {
+          if (ev.date >= today2) {
+            keptEvents2.push(ev);
+            keptChecked2.push(existing2.eventChecked[i] !== undefined ? existing2.eventChecked[i] : true);
+          }
+        });
+        newEvs2.forEach(function(ev) {
+          var isDup = keptEvents2.some(function(e) { return e.date === ev.date && e.title === ev.title; });
+          if (!isDup) { keptEvents2.push(ev); keptChecked2.push(true); }
+        });
+        var combined2 = keptEvents2.map(function(ev, i) { return {ev:ev, checked:keptChecked2[i]}; });
+        combined2.sort(function(a,b) { return a.ev.date.localeCompare(b.ev.date); });
+        var evs = combined2.map(function(x) { return x.ev; });
+        var evChecked2 = combined2.map(function(x) { return x.checked; });
+
+        var keptHw2 = [];
+        var keptHwDone2 = [];
+        (existing2.homework || []).forEach(function(h, i) {
+          if (!h.due || h.due >= today2) {
+            keptHw2.push(h);
+            keptHwDone2.push(existing2.hwDone[i] || false);
+          }
+        });
+        newHw2.forEach(function(h) {
+          var isDup = keptHw2.some(function(e) { return e.task === h.task; });
+          if (!isDup) { keptHw2.push(h); keptHwDone2.push(false); }
+        });
+
         state.childData[childId] = {
-          events: evs, eventChecked: evs.map(function() { return true; }),
-          homework: hw, hwDone: hw.map(function() { return false; }),
-          summary: parsed.summary || ''
+          events: evs, eventChecked: evChecked2,
+          homework: keptHw2, hwDone: keptHwDone2,
+          summary: parsed.summary || existing2.summary || ''
         };
         saveLocal();
         if (parsed.summary) {
@@ -881,12 +915,62 @@ function analyze(text, childId) {
     } catch(e) {
       throw new Error('AI-svar kunne ikke tolkes: ' + clean.slice(0, 120));
     }
-    var evs = (parsed.events || []).filter(function(e) { return e.date && e.title; });
-    var hw = parsed.homework || [];
+    var today = new Date().toISOString().slice(0,10);
+    var newEvs = (parsed.events || []).filter(function(e) { return e.date && e.title; });
+    var newHw = parsed.homework || [];
+
+    var existing = state.childData[childId] || {events:[], eventChecked:[], homework:[], hwDone:[], summary:''};
+
+    // Remove events that have passed (before today)
+    var keptEvents = [];
+    var keptChecked = [];
+    (existing.events || []).forEach(function(ev, i) {
+      if (ev.date >= today) {
+        keptEvents.push(ev);
+        keptChecked.push(existing.eventChecked[i] !== undefined ? existing.eventChecked[i] : true);
+      }
+    });
+
+    // Add new events, skip duplicates (same date + title)
+    newEvs.forEach(function(ev) {
+      var isDup = keptEvents.some(function(e) { return e.date === ev.date && e.title === ev.title; });
+      if (!isDup) {
+        keptEvents.push(ev);
+        keptChecked.push(true);
+      }
+    });
+
+    // Sort by date
+    var combined = keptEvents.map(function(ev, i) { return {ev: ev, checked: keptChecked[i]}; });
+    combined.sort(function(a, b) { return a.ev.date.localeCompare(b.ev.date); });
+    var evs = combined.map(function(x) { return x.ev; });
+    var evChecked = combined.map(function(x) { return x.checked; });
+
+    // Remove homework that has passed (if due date set)
+    var keptHw = [];
+    var keptHwDone = [];
+    (existing.homework || []).forEach(function(h, i) {
+      if (!h.due || h.due >= today) {
+        keptHw.push(h);
+        keptHwDone.push(existing.hwDone[i] || false);
+      }
+    });
+
+    // Add new homework, skip duplicates
+    newHw.forEach(function(h) {
+      var isDup = keptHw.some(function(e) { return e.task === h.task; });
+      if (!isDup) {
+        keptHw.push(h);
+        keptHwDone.push(false);
+      }
+    });
+
     state.childData[childId] = {
-      events: evs, eventChecked: evs.map(function() { return true; }),
-      homework: hw, hwDone: hw.map(function() { return false; }),
-      summary: parsed.summary || ''
+      events: evs,
+      eventChecked: evChecked,
+      homework: keptHw,
+      hwDone: keptHwDone,
+      summary: parsed.summary || existing.summary || ''
     };
     saveLocal();
     if (parsed.summary) {
